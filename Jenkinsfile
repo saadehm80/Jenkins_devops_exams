@@ -1,7 +1,8 @@
 pipeline {
 environment { // Declaration of environment variables
 DOCKER_ID = "a1b2o3u4a5c6h7i8r9" // replace this with your docker-id
-DOCKER_IMAGE = "jenkins-devops-exams"
+DOCKER_IMAGE_CAST = "jenkins-devops-exams-cast"
+DOCKER_IMAGE_MOVIE = "jenkins-devops-exams-movie"
 DOCKER_TAG = "v.${BUILD_ID}.0" // we will tag our images with the current build in order to increment the value by 1 with each new build
 }
 agent any // Jenkins will be able to select all available agents
@@ -9,11 +10,14 @@ stages {
         stage(' Docker Build'){ // docker build image stage
             steps {
                 script {
-                sh '''
-                 docker rm -f jenkins
-                 docker build -t $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG .
-                sleep 6
-                '''
+                  sh '''
+                   docker rm -f  service-cast
+                   docker build -t $DOCKER_ID/$DOCKER_IMAGE_CAST:$DOCKER_TAG ./cast-service/.
+                   sleep 6
+                   docker rm -f  service-movie
+                   docker build -t $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG ./movie-service/.
+                   sleep 6
+                  '''
                 }
             }
         }
@@ -21,9 +25,12 @@ stages {
                 steps {
                     script {
                     sh '''
-                    docker run -d -p 80:80 --name jenkins $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG
-                    sleep 10
-                    '''
+                      docker run -d -p 80:80 --name service-cast $DOCKER_ID/$DOCKER_IMAGE_CAST:$DOCKER_TAG
+                      sleep 10
+                      docker run -d -p 80:80 --name service-movie $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG
+                      sleep 10
+                    
+                     '''
                     }
                 }
             }
@@ -32,7 +39,8 @@ stages {
             steps {
                     script {
                     sh '''
-                    curl localhost
+                        curl localhost:8001
+                        curl localhost:8002
                     '''
                     }
             }
@@ -48,8 +56,9 @@ stages {
 
                 script {
                 sh '''
-                docker login -u $DOCKER_ID -p $DOCKER_PASS
-                docker push $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG
+                   docker login -u $DOCKER_ID -p $DOCKER_PASS
+                   docker push $DOCKER_ID/$DOCKER_IMAGE_CAST:$DOCKER_TAG
+                   docker push $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG
                 '''
                 }
             }
