@@ -39,8 +39,8 @@ stages {
             steps {
                     script {
                     sh '''
-                        curl localhost:8001
-                        curl localhost:8002
+                        curl localhost
+                        curl localhost
                     '''
                     }
             }
